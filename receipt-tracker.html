@@ -4,30 +4,79 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Receipt Upload Test</title>
+<title>Receipt Tracker</title>
 
 <style>
 
 body{
-    font-family:Arial;
-    padding:20px;
+    font-family:Arial,sans-serif;
+    margin:0;
+    padding:15px;
+    background:#f4f4f4;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+}
+
+.card{
+    background:white;
+    padding:15px;
+    border-radius:12px;
+    margin-bottom:15px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.12);
+}
+
+h1{
+    text-align:center;
+    color:#003366;
+}
+
+.subtitle{
+    text-align:center;
+    color:#666;
+    margin-bottom:20px;
+}
+
+input,
+select{
+    width:100%;
+    padding:15px;
+    font-size:18px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    box-sizing:border-box;
+    margin-top:5px;
 }
 
 button{
     width:100%;
     height:60px;
+    border:none;
+    border-radius:10px;
     font-size:20px;
+    cursor:pointer;
+}
+
+.capture{
+    background:#0078d7;
+    color:white;
+}
+
+.save{
+    background:green;
+    color:white;
     margin-top:10px;
 }
 
-input,select{
-    width:100%;
-    padding:15px;
-    font-size:18px;
-    margin-top:5px;
+.export{
+    background:orange;
+    color:white;
+    margin-top:10px;
 }
 
-img{
+.preview{
     width:100%;
     max-height:300px;
     object-fit:contain;
@@ -35,15 +84,59 @@ img{
     margin-top:10px;
 }
 
-</style>
+.summary-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:10px;
+}
 
+.summary-card{
+    background:#f7f7f7;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid #ddd;
+    text-align:center;
+}
+
+.total{
+    text-align:center;
+    font-size:24px;
+    font-weight:bold;
+    color:#003366;
+    margin-top:10px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th{
+    background:#0078d7;
+    color:white;
+}
+
+th,td{
+    border:1px solid #ccc;
+    padding:8px;
+}
+
+</style>
 </head>
 
 <body>
 
-<h2>Receipt Upload Test</h2>
+<div class="container">
 
-<button onclick="document.getElementById('photo').click()">
+<h1>Receipt Tracker</h1>
+<div class="subtitle">
+Capture, Store & Track Your Receipts
+</div>
+
+<div class="card">
+
+<button class="capture"
+onclick="document.getElementById('photo').click()">
 📷 Capture Receipt
 </button>
 
@@ -54,12 +147,16 @@ accept="image/*"
 capture="environment"
 style="display:none">
 
-<img id="preview">
+<img id="preview" class="preview">
 
-<br>
+<br><br>
 
+<label>Date</label>
 <input type="date" id="date">
 
+<br><br>
+
+<label>Category</label>
 <select id="category">
 <option>Medical</option>
 <option>Lifestyle</option>
@@ -69,122 +166,259 @@ style="display:none">
 <option>Others</option>
 </select>
 
-<input
-id="amount"
-type="number"
-step="0.01"
-placeholder="Amount">
+<br><br>
 
-<button onclick="saveReceipt()">
-SAVE
+<label>Amount (RM)</label>
+<input type="number" id="amount" step="0.01">
+
+<button class="save" onclick="saveReceipt()">
+SAVE RECEIPT
 </button>
+
+</div>
+
+<div class="card">
+
+<h3>Year Filter</h3>
+
+<input
+type="number"
+id="yearFilter"
+list="yearList"
+value="2026"
+oninput="refreshDisplay()">
+
+<datalist id="yearList"></datalist>
+
+</div>
+
+<div class="card">
+
+<h3>Summary Dashboard</h3>
+
+<div id="summaryCards" class="summary-grid"></div>
+
+<div id="totalAmount" class="total">
+TOTAL : RM 0.00
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>Receipt Records</h3>
+
+<table>
+
+<thead>
+<tr>
+<th>Date</th>
+<th>Category</th>
+<th>Amount</th>
+</tr>
+</thead>
+
+<tbody id="receiptTable"></tbody>
+
+</table>
+
+<button class="export" onclick="exportCSV()">
+EXPORT CSV
+</button>
+
+</div>
+
+</div>
 
 <script>
 
-const API =
-"https://script.google.com/macros/s/AKfycbyquOtg8CGwCXWGF2-H7PLqxMh6CelwEOsyS9K-u8ZKNN9VIuNtfVaKGZDS11o684dEGw/exec";
+const categories=[
+"Medical",
+"Lifestyle",
+"Education",
+"Book/Magazine",
+"Sport",
+"Others"
+];
 
-document.getElementById("date").value =
+let receipts=
+JSON.parse(localStorage.getItem("receipts")) || [];
+
+document.getElementById("date").value=
 new Date().toISOString().split("T")[0];
+
+for(let y=2025;y<=2100;y++){
+
+ let option=document.createElement("option");
+ option.value=y;
+
+ document
+ .getElementById("yearList")
+ .appendChild(option);
+
+}
 
 document
 .getElementById("photo")
 .addEventListener("change",function(e){
 
-    const file=e.target.files[0];
+ let file=e.target.files[0];
 
-    if(file){
+ if(file){
 
-        const reader=new FileReader();
+  let reader=new FileReader();
 
-        reader.onload=function(ev){
+  reader.onload=function(ev){
 
-            const img =
-            document.getElementById("preview");
+   let img=
+   document.getElementById("preview");
 
-            img.src=ev.target.result;
-            img.style.display="block";
+   img.src=ev.target.result;
+   img.style.display="block";
 
-        };
+  };
 
-        reader.readAsDataURL(file);
+  reader.readAsDataURL(file);
 
-    }
+ }
 
 });
 
-async function saveReceipt(){
+function saveReceipt(){
 
-    const file =
-    document.getElementById("photo").files[0];
+ let date=
+ document.getElementById("date").value;
 
-    if(!file){
+ let category=
+ document.getElementById("category").value;
 
-        alert("Capture receipt first");
-        return;
+ let amount=
+ parseFloat(
+ document.getElementById("amount").value
+ );
 
-    }
+ if(!date || isNaN(amount)){
 
-    const reader=new FileReader();
+  alert("Enter Date and Amount");
+  return;
 
-    reader.onload=async function(){
+ }
 
-        try{
+ receipts.push({
+  date,
+  category,
+  amount
+ });
 
-            const response=
-            await fetch(API,{
+ localStorage.setItem(
+ "receipts",
+ JSON.stringify(receipts)
+ );
 
-                method:"POST",
+ refreshDisplay();
 
-                body:JSON.stringify({
-
-                    date:
-                    document.getElementById("date").value,
-
-                    category:
-                    document.getElementById("category").value,
-
-                    amount:
-                    document.getElementById("amount").value,
-
-                    image:
-                    reader.result.split(",")[1]
-
-                })
-
-            });
-
-            const result=
-            await response.json();
-
-            if(result.success){
-
-                alert(
-                "Upload Success\n\n" +
-                result.fileName
-                );
-
-            }else{
-
-                alert(
-                "Error\n\n" +
-                result.error
-                );
-
-            }
-
-        }
-        catch(err){
-
-            alert(err);
-
-        }
-
-    };
-
-    reader.readAsDataURL(file);
+ alert("Receipt Saved");
 
 }
+
+function refreshDisplay(){
+
+ const year=
+ document.getElementById("yearFilter").value;
+
+ const filtered=
+ receipts.filter(r=>
+ new Date(r.date).getFullYear()==year
+ );
+
+ let html="";
+ let total=0;
+
+ categories.forEach(cat=>{
+
+  const rows=
+  filtered.filter(r=>r.category===cat);
+
+  const count=
+  rows.length;
+
+  const sum=
+  rows.reduce(
+  (a,b)=>a+b.amount,
+  0);
+
+  total+=sum;
+
+  html+=`
+  <div class="summary-card">
+  <b>${cat}</b><br>
+  ${count} Receipt(s)<br>
+  RM ${sum.toFixed(2)}
+  </div>
+  `;
+
+ });
+
+ document.getElementById(
+ "summaryCards"
+ ).innerHTML=html;
+
+ document.getElementById(
+ "totalAmount"
+ ).innerHTML=
+ "TOTAL : RM " +
+ total.toFixed(2);
+
+ let rows="";
+
+ filtered.forEach(r=>{
+
+ rows+=`
+ <tr>
+ <td>${r.date}</td>
+ <td>${r.category}</td>
+ <td>RM ${r.amount.toFixed(2)}</td>
+ </tr>
+ `;
+
+ });
+
+ document.getElementById(
+ "receiptTable"
+ ).innerHTML=rows;
+
+}
+
+function exportCSV(){
+
+ let csv=
+ "Date,Category,Amount\n";
+
+ receipts.forEach(r=>{
+
+  csv+=
+  `${r.date},${r.category},${r.amount}\n`;
+
+ });
+
+ let blob=
+ new Blob([csv],
+ {type:"text/csv"});
+
+ let link=
+ document.createElement("a");
+
+ link.href=
+ URL.createObjectURL(blob);
+
+ link.download=
+ "ReceiptTracker.csv";
+
+ link.click();
+
+}
+
+refreshDisplay();
 
 </script>
 
