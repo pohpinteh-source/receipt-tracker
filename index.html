@@ -299,9 +299,9 @@ JSON.parse(localStorage.getItem("receipts")) || [];
 
 document.getElementById("date").value=
 new Date().toISOString().split("T")[0];
-document.getElementById("yearFilter").value =
-new Date().getFullYear();
 
+const currentYear =
+new Date().getFullYear();
 
 const yearSelect =
 document.getElementById("yearFilter");
@@ -315,8 +315,11 @@ for(let y=2025;y<=2100;y++){
     option.textContent = y;
 
     yearSelect.appendChild(option);
-
 }
+
+yearSelect.value = currentYear;
+
+
 document
 .getElementById("photo")
 .addEventListener("change", function(e){
