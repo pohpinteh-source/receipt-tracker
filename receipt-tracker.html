@@ -249,12 +249,11 @@ EXPORT CSV
 
 <button
 class="export"
-onclick="window.open('https://docs.google.com/spreadsheets/d/1OK1N4S3FlXHMtFcuZq2CRY00SJ3ZyJGxXe-ClKkophg/edit')">
+onclick="window.open('https://docs.google.com/spreadsheets/d/10K1N4S3FlXHMtFcuZq2CRY00SJ3ZyJGxXe-ClKkophg/edit')">
 
 OPEN GOOGLE SHEET
 
 </button>
-
 </div>
 
 </div>
@@ -292,29 +291,30 @@ for(let y=2025;y<=2100;y++){
 
 document
 .getElementById("photo")
-.addEventListener("change",function(e){
+.addEventListener("change", function(e){
 
- let file=e.target.files[0];
+    let file = e.target.files[0];
 
- if(file){
+    if(file){
 
-  let reader=new FileReader();
+        let reader = new FileReader();
 
-  reader.onload=function(ev){
+        reader.onload = function(ev){
 
-   let img=
-   document.getElementById("preview");
+            let img =
+            document.getElementById("preview");
 
-   img.src=ev.target.result;
-   img.style.display="block";
+            img.src = ev.target.result;
+            img.style.display = "block";
 
-  };
+        };
 
-  reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
 
- }
+    }
 
 });
+
 
 async function saveReceipt(){
 
@@ -356,78 +356,73 @@ const API =
     const reader =
     new FileReader();
 
-    reader.onload = async function(){
+reader.onload = async function(){
 
-        try{
+    try{
 
-            const response =
-            await fetch(API,{
+const response = await fetch(API,{
 
-                method:"POST",
 
-                body:JSON.stringify({
+            method:"POST",
 
-                    date:date,
-                    category:category,
-                    amount:amount,
-                    image:reader.result.split(",")[1]
+            mode:"no-cors",
 
-                })
+            headers:{
+                "Content-Type":"text/plain;charset=utf-8"
+            },
 
-            });
+            body:JSON.stringify({
 
-            const result =
-            await response.json();
+                date:date,
+                category:category,
+                amount:amount,
+                image:reader.result.split(",")[1]
 
-            if(result.success){
+            })
 
-                receipts.push({
+        });
+console.log(response);
 
-                    id: Date.now(),
-                    date,
-                    category,
-                    amount,
-                    fileName:
-                    result.fileName
+        receipts.push({
 
-                });
+            id: Date.now(),
+            date,
+            category,
+            amount,
+            fileName:
+            category.replace("/","_") +
+            "_" +
+            date +
+            "_RM" +
+            amount +
+            ".jpg"
 
-                localStorage.setItem(
-                    "receipts",
-                    JSON.stringify(receipts)
-                );
+        });
 
-                refreshDisplay();
+        localStorage.setItem(
+            "receipts",
+            JSON.stringify(receipts)
+        );
 
-                alert(
-                "Upload Success\n\n" +
-                result.fileName
-                );
+        refreshDisplay();
 
-            }
-            else{
+        alert(
+        "Receipt submitted.\n\nCheck Google Sheet after a few seconds."
+        );
 
-                alert(
-                "Upload Failed\n\n" +
-                result.error
-                );
+    }
+    catch(err){
 
-            }
+        console.error(err);
 
-        }
-        catch(err){
+        alert(
+        "Connection Error\n\n" +
+        err
+        );
 
-            alert(
-            "Connection Error\n\n" +
-            err
-            );
+    }
 
-        }
-
-    };
-
-    reader.readAsDataURL(file);
-
+};
 }
 function refreshDisplay(){
 
