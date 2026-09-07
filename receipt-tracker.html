@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Receipt Upload Test</title>
+
+<style>
+
+body{
+    font-family:Arial;
+    padding:20px;
+}
+
+button{
+    width:100%;
+    height:60px;
+    font-size:20px;
+    margin-top:10px;
+}
+
+input,select{
+    width:100%;
+    padding:15px;
+    font-size:18px;
+    margin-top:5px;
+}
+
+img{
+    width:100%;
+    max-height:300px;
+    object-fit:contain;
+    display:none;
+    margin-top:10px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>Receipt Upload Test</h2>
+
+<button onclick="document.getElementById('photo').click()">
+📷 Capture Receipt
+</button>
+
+<input
+type="file"
+id="photo"
+accept="image/*"
+capture="environment"
+style="display:none">
+
+<img id="preview">
+
+<br>
+
+<input type="date" id="date">
+
+<select id="category">
+<option>Medical</option>
+<option>Lifestyle</option>
+<option>Education</option>
+<option>Book/Magazine</option>
+<option>Sport</option>
+<option>Others</option>
+</select>
+
+<input
+id="amount"
+type="number"
+step="0.01"
+placeholder="Amount">
+
+<button onclick="saveReceipt()">
+SAVE
+</button>
+
+<script>
+
+const API =
+"https://script.google.com/macros/s/AKfycbyquOtg8CGwCXWGF2-H7PLqxMh6CelwEOsyS9K-u8ZKNN9VIuNtfVaKGZDS11o684dEGw/exec";
+
+document.getElementById("date").value =
+new Date().toISOString().split("T")[0];
+
+document
+.getElementById("photo")
+.addEventListener("change",function(e){
+
+    const file=e.target.files[0];
+
+    if(file){
+
+        const reader=new FileReader();
+
+        reader.onload=function(ev){
+
+            const img =
+            document.getElementById("preview");
+
+            img.src=ev.target.result;
+            img.style.display="block";
+
+        };
+
+        reader.readAsDataURL(file);
+
+    }
+
+});
+
+async function saveReceipt(){
+
+    const file =
+    document.getElementById("photo").files[0];
+
+    if(!file){
+
+        alert("Capture receipt first");
+        return;
+
+    }
+
+    const reader=new FileReader();
+
+    reader.onload=async function(){
+
+        try{
+
+            const response=
+            await fetch(API,{
+
+                method:"POST",
+
+                body:JSON.stringify({
+
+                    date:
+                    document.getElementById("date").value,
+
+                    category:
+                    document.getElementById("category").value,
+
+                    amount:
+                    document.getElementById("amount").value,
+
+                    image:
+                    reader.result.split(",")[1]
+
+                })
+
+            });
+
+            const result=
+            await response.json();
+
+            if(result.success){
+
+                alert(
+                "Upload Success\n\n" +
+                result.fileName
+                );
+
+            }else{
+
+                alert(
+                "Error\n\n" +
+                result.error
+                );
+
+            }
+
+        }
+        catch(err){
+
+            alert(err);
+
+        }
+
+    };
+
+    reader.readAsDataURL(file);
+
+}
+
+</script>
+
+</body>
+</html>
