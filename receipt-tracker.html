@@ -114,7 +114,12 @@ button{
     border:1px solid #ddd;
     text-align:center;
 }
-
+.clear-btn{
+    background:#666666;
+    color:white;
+    margin-top:10px;
+}
+``
 .total{
     text-align:center;
     font-size:24px;
@@ -189,7 +194,13 @@ style="display:none">
 <input type="number" id="amount" step="0.01">
 
 <button class="save" onclick="saveReceipt()">
-SAVE RECEIPT
+SUBMIT RECEIPT
+</button>
+
+<button
+class="clear-btn"
+onclick="clearForm()">
+CLEAR FORM
 </button>
 
 </div>
@@ -406,9 +417,11 @@ console.log(response);
 
         refreshDisplay();
 
-        alert(
-        "Receipt submitted.\n\nCheck Google Sheet after a few seconds."
-        );
+alert(
+"Receipt Submitted Successfully"
+);
+
+clearForm();
 
     }
     catch(err){
@@ -423,6 +436,25 @@ console.log(response);
     }
 
 };
+}
+
+
+function clearForm(){
+
+    document.getElementById("photo").value = "";
+
+    document.getElementById("preview").src = "";
+
+    document.getElementById("preview").style.display =
+    "none";
+
+    document.getElementById("date").value =
+    new Date().toISOString().split("T")[0];
+
+    document.getElementById("category").selectedIndex = 0;
+
+    document.getElementById("amount").value = "";
+
 }
 function refreshDisplay(){
 
