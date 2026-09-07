@@ -271,6 +271,9 @@ OPEN GOOGLE SHEET
 </div>
 
 <script>
+const SCRIPT_URL =
+"https://script.google.com/macros/s/AKfycbyquOtg8CGwCXWGF2-H7PLqxMh6CelwEOsyS9K-u8ZKNN9VIuNtfVaKGZDS11o684dEGw/exec";
+
 
 const categories=[
 "Medical",
@@ -364,56 +367,69 @@ function saveReceipt(){
         const image =
         reader.result.split(",")[1];
 
-        google.script.run
+fetch(SCRIPT_URL,{
 
-        .withSuccessHandler(function(result){
+    method:"POST",
 
-            if(result.success){
+    body:JSON.stringify({
 
-                receipts.push({
+        action:"saveReceipt",
 
-                    id: Date.now(),
-                    date: date,
-                    category: category,
-                    amount: parseFloat(amount),
-                    fileName: result.fileName
+        date:date,
+        category:category,
+        amount:amount,
+        image:image
 
-                });
+    })
 
-                localStorage.setItem(
-                    "receipts",
-                    JSON.stringify(receipts)
-                );
+})
+.then(r => r.json())
+.then(result => {
 
-                refreshDisplay();
+    if(result.success){
 
-                alert(
-                    "Receipt Submitted Successfully"
-                );
+        receipts.push({
 
-                clearForm();
-
-            }
-            else{
-
-                alert(
-                    "Error:\n\n" +
-                    result.error
-                );
-
-            }
-
-        })
-
-        .saveReceipt({
-
-            date: date,
-            category: category,
-            amount: amount,
-            image: image
+            id:Date.now(),
+            date:date,
+            category:category,
+            amount:parseFloat(amount),
+            fileName:result.fileName
 
         });
 
+        localStorage.setItem(
+            "receipts",
+            JSON.stringify(receipts)
+        );
+
+        refreshDisplay();
+
+        alert(
+            "Receipt Submitted Successfully"
+        );
+
+        clearForm();
+
+    }
+    else{
+
+        alert(
+            "Error\n\n" +
+            result.error
+        );
+
+    }
+
+})
+.catch(err => {
+
+    alert(
+        "Connection Error\n\n" +
+        err
+    );
+
+});
     };
 
     reader.readAsDataURL(file);
