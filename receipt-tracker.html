@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>Receipt Tracker</title>
 
@@ -10,9 +10,9 @@
 
 body{
     font-family:Arial,sans-serif;
+    background:#f4f4f4;
     margin:0;
     padding:15px;
-    background:#f4f4f4;
 }
 
 .container{
@@ -33,23 +33,6 @@ h1{
     color:#003366;
 }
 
-.subtitle{
-    text-align:center;
-    color:#666;
-    margin-bottom:20px;
-}
-
-input,
-select{
-    width:100%;
-    padding:15px;
-    font-size:18px;
-    border:1px solid #ccc;
-    border-radius:8px;
-    box-sizing:border-box;
-    margin-top:5px;
-}
-
 button{
     width:100%;
     height:60px;
@@ -64,83 +47,31 @@ button{
     color:white;
 }
 
-.save{
+.submit{
     background:green;
     color:white;
     margin-top:10px;
 }
 
-.export{
-    background:orange;
+.clear{
+    background:#666;
     color:white;
     margin-top:10px;
 }
-.action-btn{
-    width:auto;
-    height:35px;
-    font-size:14px;
-    padding:5px 10px;
-    margin-right:5px;
-    border:none;
-    border-radius:5px;
-    color:white;
+
+input,select{
+    width:100%;
+    padding:15px;
+    font-size:18px;
+    margin-top:5px;
+    box-sizing:border-box;
 }
 
-.edit-btn{
-    background:#0078d7;
-}
-
-.delete-btn{
-    background:red;
-}
 .preview{
     width:100%;
     max-height:300px;
     object-fit:contain;
     display:none;
-    margin-top:10px;
-}
-
-.summary-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-    gap:10px;
-}
-
-.summary-card{
-    background:#f7f7f7;
-    padding:12px;
-    border-radius:10px;
-    border:1px solid #ddd;
-    text-align:center;
-}
-.clear-btn{
-    background:#666666;
-    color:white;
-    margin-top:10px;
-}
-``
-.total{
-    text-align:center;
-    font-size:24px;
-    font-weight:bold;
-    color:#003366;
-    margin-top:10px;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-}
-
-th{
-    background:#0078d7;
-    color:white;
-}
-
-th,td{
-    border:1px solid #ccc;
-    padding:8px;
 }
 
 </style>
@@ -150,26 +81,30 @@ th,td{
 
 <div class="container">
 
-<h1>Receipt Tracker</h1>
-<div class="subtitle">
-Capture, Store & Track Your Receipts
-</div>
-
 <div class="card">
 
-<button class="capture"
+<h1>Receipt Tracker</h1>
+
+<button
+class="capture"
 onclick="document.getElementById('photo').click()">
+
 📷 Capture Receipt
+
 </button>
 
 <input
-type="file"
 id="photo"
+type="file"
 accept="image/*"
 capture="environment"
 style="display:none">
 
-<img id="preview" class="preview">
+<br><br>
+
+<img
+id="preview"
+class="preview">
 
 <br><br>
 
@@ -180,438 +115,114 @@ style="display:none">
 
 <label>Category</label>
 <select id="category">
+
 <option>Medical</option>
 <option>Lifestyle</option>
 <option>Education</option>
 <option>Book/Magazine</option>
 <option>Sport</option>
 <option>Others</option>
+
 </select>
 
 <br><br>
 
 <label>Amount (RM)</label>
-<input type="number" id="amount" step="0.01">
-
-<button class="save" onclick="saveReceipt()">
-SUBMIT RECEIPT
-</button>
-
-<button
-class="clear-btn"
-onclick="clearForm()">
-CLEAR FORM
-</button>
-
-</div>
-
-<div class="card">
-
-<h3>Year Filter</h3>
-
 <input
+id="amount"
 type="number"
-id="yearFilter"
-list="yearList"
-value=""
-placeholder="Type Year or Select"
-oninput="refreshDisplay()">
+step="0.01">
 
-<datalist id="yearList"></datalist>
+<button
+class="submit"
+onclick="submitReceipt()">
 
-</div>
+SUBMIT RECEIPT
 
-<div class="card">
-
-<h3>Summary Dashboard</h3>
-
-<div id="summaryCards" class="summary-grid"></div>
-
-<div id="totalAmount" class="total">
-TOTAL : RM 0.00
-</div>
-
-</div>
-
-<div class="card">
-
-<h3>Receipt Records</h3>
-
-<table>
-
-<thead>
-<tr>
-<th>Date</th>
-<th>Category</th>
-<th>Amount</th>
-<th>File Name</th>
-<th>Action</th>
-</tr>
-
-</thead>
-
-<tbody id="receiptTable"></tbody>
-
-</table>
-
-<button class="export" onclick="exportCSV()">
-EXPORT CSV
 </button>
 
 <button
-class="export"
-onclick="window.open('https://docs.google.com/spreadsheets/d/10K1N4S3FlXHMtFcuZq2CRY00SJ3ZyJGxXe-ClKkophg/edit')">
+class="clear"
+onclick="clearForm()">
 
-OPEN GOOGLE SHEET
+CLEAR FORM
 
 </button>
+
 </div>
 
 </div>
 
 <script>
 
-const categories=[
-"Medical",
-"Lifestyle",
-"Education",
-"Book/Magazine",
-"Sport",
-"Others"
-];
-
-let receipts=
-JSON.parse(localStorage.getItem("receipts")) || [];
-
-document.getElementById("date").value=
+document.getElementById("date").value =
 new Date().toISOString().split("T")[0];
-document.getElementById("yearFilter").value =
-new Date().getFullYear();
-
-
-for(let y=2025;y<=2100;y++){
-
- let option=document.createElement("option");
- option.value=y;
-
- document
- .getElementById("yearList")
- .appendChild(option);
-
-}
 
 document
 .getElementById("photo")
-.addEventListener("change", function(e){
+.addEventListener("change",function(e){
 
-    let file = e.target.files[0];
+const file=e.target.files[0];
 
-    if(file){
+if(file){
 
-        let reader = new FileReader();
+const reader =
+new FileReader();
 
-        reader.onload = function(ev){
+reader.onload=function(ev){
 
-            let img =
-            document.getElementById("preview");
+document.getElementById(
+"preview"
+).src=ev.target.result;
 
-            img.src = ev.target.result;
-            img.style.display = "block";
+document.getElementById(
+"preview"
+).style.display="block";
 
-        };
+};
 
-        reader.readAsDataURL(file);
+reader.readAsDataURL(file);
 
-    }
+}
 
 });
 
-
-async function saveReceipt(){
-
-const API =
-"https://script.google.com/macros/s/AKfycbyquOtg8CGwCXWGF2-H7PLqxMh6CelwEOsyS9K-u8ZKNN9VIuNtfVaKGZDS11o684dEGw/exec";
-
-
-    const photoInput =
-    document.getElementById("photo");
-
-    const file =
-    photoInput.files[0];
-
-    if(!file){
-
-        alert("Please capture receipt photo first");
-        return;
-
-    }
-
-    let date =
-    document.getElementById("date").value;
-
-    let category =
-    document.getElementById("category").value;
-
-    let amount =
-    parseFloat(
-    document.getElementById("amount").value
-    );
-
-    if(!date || isNaN(amount)){
-
-        alert("Enter Date and Amount");
-        return;
-
-    }
-
-    const reader =
-    new FileReader();
-
-reader.onload = async function(){
-
-    try{
-
-const response = await fetch(API,{
-
-
-            method:"POST",
-
-            mode:"no-cors",
-
-            headers:{
-                "Content-Type":"text/plain;charset=utf-8"
-            },
-
-            body:JSON.stringify({
-
-                date:date,
-                category:category,
-                amount:amount,
-                image:reader.result.split(",")[1]
-
-            })
-
-        });
-console.log(response);
-
-        receipts.push({
-
-            id: Date.now(),
-            date,
-            category,
-            amount,
-            fileName:
-            category.replace("/","_") +
-            "_" +
-            date +
-            "_RM" +
-            amount +
-            ".jpg"
-
-        });
-
-        localStorage.setItem(
-            "receipts",
-            JSON.stringify(receipts)
-        );
-
-        refreshDisplay();
-
-alert(
-"Receipt Submitted Successfully"
-);
-
-clearForm();
-
-    }
-    catch(err){
-
-        console.error(err);
-
-        alert(
-        "Connection Error\n\n" +
-        err
-        );
-
-    }
-
-};
-}
-
-
 function clearForm(){
 
-    document.getElementById("photo").value = "";
+document.getElementById(
+"photo"
+).value="";
 
-    document.getElementById("preview").src = "";
+document.getElementById(
+"preview"
+).src="";
 
-    document.getElementById("preview").style.display =
-    "none";
+document.getElementById(
+"preview"
+).style.display="none";
 
-    document.getElementById("date").value =
-    new Date().toISOString().split("T")[0];
+document.getElementById(
+"date"
+).value =
+new Date().toISOString().split("T")[0];
 
-    document.getElementById("category").selectedIndex = 0;
+document.getElementById(
+"category"
+).selectedIndex=0;
 
-    document.getElementById("amount").value = "";
-
-}
-function refreshDisplay(){
-
- const year=
- document.getElementById("yearFilter").value;
-
- const filtered=
- receipts.filter(r=>
- new Date(r.date).getFullYear()==year
- );
-
- let html="";
- let total=0;
-
- categories.forEach(cat=>{
-
-  const rows=
-  filtered.filter(r=>r.category===cat);
-
-  const count=
-  rows.length;
-
-  const sum=
-  rows.reduce(
-  (a,b)=>a+b.amount,
-  0);
-
-  total+=sum;
-
-  html+=`
-  <div class="summary-card">
-  <b>${cat}</b><br>
-  ${count} Receipt(s)<br>
-  RM ${sum.toFixed(2)}
-  </div>
-  `;
-
- });
-
- document.getElementById(
- "summaryCards"
- ).innerHTML=html;
-
- document.getElementById(
- "totalAmount"
- ).innerHTML=
- "TOTAL : RM " +
- total.toFixed(2);
-
- let rows="";
-
- filtered.forEach(r=>{
-
-rows+=`
-<tr>
-<td>${r.date}</td>
-<td>${r.category}</td>
-<td>RM ${r.amount.toFixed(2)}</td>
-<td>${r.fileName || "-"}</td>
-<td>
-
-<button
-class="action-btn edit-btn"
-onclick="editReceipt(${r.id})">
-Edit
-</button>
-
-<button
-class="action-btn delete-btn"
-onclick="deleteReceipt(${r.id})">
-Delete
-</button>
-
-</td>
-</tr>
-`;
- });
-
- document.getElementById(
- "receiptTable"
- ).innerHTML=rows;
+document.getElementById(
+"amount"
+).value="";
 
 }
 
-function exportCSV(){
+function submitReceipt(){
 
-let csv=
-"Date,Category,Amount,File Name\n";
-
-
- receipts.forEach(r=>{
-
-  csv+=
-`${r.date},${r.category},${r.amount},${r.fileName}\n`
-
- });
-
- let blob=
- new Blob([csv],
- {type:"text/csv"});
-
- let link=
- document.createElement("a");
-
- link.href=
- URL.createObjectURL(blob);
-
- link.download=
- "ReceiptTracker.csv";
-
- link.click();
+alert(
+"Submit function test successful"
+);
 
 }
-function deleteReceipt(id){
-
-    if(!confirm("Delete this receipt?")){
-        return;
-    }
-
-    receipts =
-    receipts.filter(
-        r => r.id !== id
-    );
-
-    localStorage.setItem(
-        "receipts",
-        JSON.stringify(receipts)
-    );
-
-    refreshDisplay();
-}
-
-function editReceipt(id){
-
-    const r =
-    receipts.find(
-        x => x.id === id
-    );
-
-    if(!r) return;
-
-    document.getElementById("date").value =
-    r.date;
-
-    document.getElementById("category").value =
-    r.category;
-
-    document.getElementById("amount").value =
-    r.amount;
-
-    window.scrollTo({
-        top:0,
-        behavior:"smooth"
-    });
-}
-
-refreshDisplay();
 
 </script>
 
