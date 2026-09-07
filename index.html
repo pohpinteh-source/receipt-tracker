@@ -401,16 +401,16 @@ fetch(SCRIPT_URL,{
 
     if(result.success){
 
-        receipts.push({
+receipts.push({
 
-            id:Date.now(),
-            date:date,
-            category:category,
-            amount:parseFloat(amount),
-            fileName:result.fileName
+    id: Date.now(),
+    date: date,
+    category: category,
+    amount: parseFloat(amount),
+    fileName: result.fileName,
+    fileId: result.fileId
 
-        });
-
+});
         localStorage.setItem(
             "receipts",
             JSON.stringify(receipts)
@@ -582,23 +582,51 @@ let csv=
 }
 function deleteReceipt(id){
 
-    if(!confirm("Delete this receipt?")){
+    if(
+      !confirm(
+        "Delete this receipt?"
+      )
+    ){
         return;
     }
 
-    receipts =
-    receipts.filter(
-        r => r.id !== id
-    );
+    const rec =
+      receipts.find(
+        r => r.id === id
+      );
 
-    localStorage.setItem(
-        "receipts",
-        JSON.stringify(receipts)
-    );
+    fetch(
+      SCRIPT_URL,
+      {
+        method:"POST",
+        body:JSON.stringify({
+          action:"deleteReceipt",
+          fileId:rec.fileId
+        })
+      }
+    )
+    .then(r=>r.json())
+    .then(result=>{
 
-    refreshDisplay();
+      if(result.success){
+
+        receipts =
+          receipts.filter(
+            r => r.id !== id
+          );
+
+        localStorage.setItem(
+          "receipts",
+          JSON.stringify(receipts)
+        );
+
+        refreshDisplay();
+
+      }
+
+    });
+
 }
-
 function editReceipt(id){
 
     const r =
