@@ -75,7 +75,24 @@ button{
     color:white;
     margin-top:10px;
 }
+.action-btn{
+    width:auto;
+    height:35px;
+    font-size:14px;
+    padding:5px 10px;
+    margin-right:5px;
+    border:none;
+    border-radius:5px;
+    color:white;
+}
 
+.edit-btn{
+    background:#0078d7;
+}
+
+.delete-btn{
+    background:red;
+}
 .preview{
     width:100%;
     max-height:300px;
@@ -185,7 +202,8 @@ SAVE RECEIPT
 type="number"
 id="yearFilter"
 list="yearList"
-value="2026"
+value=""
+placeholder="Type Year or Select"
 oninput="refreshDisplay()">
 
 <datalist id="yearList"></datalist>
@@ -215,7 +233,10 @@ TOTAL : RM 0.00
 <th>Date</th>
 <th>Category</th>
 <th>Amount</th>
+<th>File Name</th>
+<th>Action</th>
 </tr>
+
 </thead>
 
 <tbody id="receiptTable"></tbody>
@@ -224,6 +245,14 @@ TOTAL : RM 0.00
 
 <button class="export" onclick="exportCSV()">
 EXPORT CSV
+</button>
+
+<button
+class="export"
+onclick="window.open('https://docs.google.com/spreadsheets/d/1OK1N4S3FlXHMtFcuZq2CRY00SJ3ZyJGxXe-ClKkophg/edit')">
+
+OPEN GOOGLE SHEET
+
 </button>
 
 </div>
@@ -246,6 +275,9 @@ JSON.parse(localStorage.getItem("receipts")) || [];
 
 document.getElementById("date").value=
 new Date().toISOString().split("T")[0];
+document.getElementById("yearFilter").value =
+new Date().getFullYear();
+
 
 for(let y=2025;y<=2100;y++){
 
@@ -284,43 +316,119 @@ document
 
 });
 
-function saveReceipt(){
+async function saveReceipt(){
 
- let date=
- document.getElementById("date").value;
+const API =
+"https://script.google.com/macros/s/AKfycbyquOtg8CGwCXWGF2-H7PLqxMh6CelwEOsyS9K-u8ZKNN9VIuNtfVaKGZDS11o684dEGw/exec";
 
- let category=
- document.getElementById("category").value;
 
- let amount=
- parseFloat(
- document.getElementById("amount").value
- );
+    const photoInput =
+    document.getElementById("photo");
 
- if(!date || isNaN(amount)){
+    const file =
+    photoInput.files[0];
 
-  alert("Enter Date and Amount");
-  return;
+    if(!file){
 
- }
+        alert("Please capture receipt photo first");
+        return;
 
- receipts.push({
-  date,
-  category,
-  amount
- });
+    }
 
- localStorage.setItem(
- "receipts",
- JSON.stringify(receipts)
- );
+    let date =
+    document.getElementById("date").value;
 
- refreshDisplay();
+    let category =
+    document.getElementById("category").value;
 
- alert("Receipt Saved");
+    let amount =
+    parseFloat(
+    document.getElementById("amount").value
+    );
+
+    if(!date || isNaN(amount)){
+
+        alert("Enter Date and Amount");
+        return;
+
+    }
+
+    const reader =
+    new FileReader();
+
+    reader.onload = async function(){
+
+        try{
+
+            const response =
+            await fetch(API,{
+
+                method:"POST",
+
+                body:JSON.stringify({
+
+                    date:date,
+                    category:category,
+                    amount:amount,
+                    image:reader.result.split(",")[1]
+
+                })
+
+            });
+
+            const result =
+            await response.json();
+
+            if(result.success){
+
+                receipts.push({
+
+                    id: Date.now(),
+                    date,
+                    category,
+                    amount,
+                    fileName:
+                    result.fileName
+
+                });
+
+                localStorage.setItem(
+                    "receipts",
+                    JSON.stringify(receipts)
+                );
+
+                refreshDisplay();
+
+                alert(
+                "Upload Success\n\n" +
+                result.fileName
+                );
+
+            }
+            else{
+
+                alert(
+                "Upload Failed\n\n" +
+                result.error
+                );
+
+            }
+
+        }
+        catch(err){
+
+            alert(
+            "Connection Error\n\n" +
+            err
+            );
+
+        }
+
+    };
+
+    reader.readAsDataURL(file);
 
 }
-
 function refreshDisplay(){
 
  const year=
@@ -373,14 +481,29 @@ function refreshDisplay(){
 
  filtered.forEach(r=>{
 
- rows+=`
- <tr>
- <td>${r.date}</td>
- <td>${r.category}</td>
- <td>RM ${r.amount.toFixed(2)}</td>
- </tr>
- `;
+rows+=`
+<tr>
+<td>${r.date}</td>
+<td>${r.category}</td>
+<td>RM ${r.amount.toFixed(2)}</td>
+<td>${r.fileName || "-"}</td>
+<td>
 
+<button
+class="action-btn edit-btn"
+onclick="editReceipt(${r.id})">
+Edit
+</button>
+
+<button
+class="action-btn delete-btn"
+onclick="deleteReceipt(${r.id})">
+Delete
+</button>
+
+</td>
+</tr>
+`;
  });
 
  document.getElementById(
@@ -391,13 +514,14 @@ function refreshDisplay(){
 
 function exportCSV(){
 
- let csv=
- "Date,Category,Amount\n";
+let csv=
+"Date,Category,Amount,File Name\n";
+
 
  receipts.forEach(r=>{
 
   csv+=
-  `${r.date},${r.category},${r.amount}\n`;
+`${r.date},${r.category},${r.amount},${r.fileName}\n`
 
  });
 
@@ -416,6 +540,48 @@ function exportCSV(){
 
  link.click();
 
+}
+function deleteReceipt(id){
+
+    if(!confirm("Delete this receipt?")){
+        return;
+    }
+
+    receipts =
+    receipts.filter(
+        r => r.id !== id
+    );
+
+    localStorage.setItem(
+        "receipts",
+        JSON.stringify(receipts)
+    );
+
+    refreshDisplay();
+}
+
+function editReceipt(id){
+
+    const r =
+    receipts.find(
+        x => x.id === id
+    );
+
+    if(!r) return;
+
+    document.getElementById("date").value =
+    r.date;
+
+    document.getElementById("category").value =
+    r.category;
+
+    document.getElementById("amount").value =
+    r.amount;
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
 }
 
 refreshDisplay();
