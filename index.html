@@ -49,7 +49,11 @@ select{
     box-sizing:border-box;
     margin-top:5px;
 }
-
+#yearFilter{
+    font-size:20px;
+    font-weight:bold;
+    text-align:center;
+}
 button{
     width:100%;
     height:60px;
@@ -207,20 +211,16 @@ CLEAR FORM
 
 <div class="card">
 
-<h3>Year Filter</h3>
+<div class="card">
 
-<input
-type="number"
+<h3>📅 Report Year</h3>
+
+<select
 id="yearFilter"
-list="yearList"
-value=""
-placeholder="Type Year or Select"
-oninput="refreshDisplay()">
-
-<datalist id="yearList"></datalist>
+onchange="refreshDisplay()">
+</select>
 
 </div>
-
 <div class="card">
 
 <h3>Summary Dashboard</h3>
@@ -293,17 +293,20 @@ document.getElementById("yearFilter").value =
 new Date().getFullYear();
 
 
+const yearSelect =
+document.getElementById("yearFilter");
+
 for(let y=2025;y<=2100;y++){
 
- let option=document.createElement("option");
- option.value=y;
+    let option =
+    document.createElement("option");
 
- document
- .getElementById("yearList")
- .appendChild(option);
+    option.value = y;
+    option.textContent = y;
+
+    yearSelect.appendChild(option);
 
 }
-
 document
 .getElementById("photo")
 .addEventListener("change", function(e){
